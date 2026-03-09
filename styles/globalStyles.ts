@@ -12,6 +12,7 @@ export const globalStyles = StyleSheet.create({
     flex: 1,
     padding: 20,
     marginTop: -10,
+    alignItems: "center", // center children like the card
   },
 
   flexOne: {
@@ -44,10 +45,14 @@ export const globalStyles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 5,
     marginBottom: 10,
+    width: "90%",
+    maxWidth: 400,
   },
 
   cardCompact: {
     padding: 15,
+    width: "90%",
+    maxWidth: 400,
   },
 
   cardTitle: {
@@ -68,8 +73,8 @@ export const globalStyles = StyleSheet.create({
   },
 
   cardSpace: {
-    flexDirection: "row", 
-    alignItems: "center"
+    flexDirection: "row",
+    alignItems: "center",
   },
 
   /* ================= TEXT ================= */
