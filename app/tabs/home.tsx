@@ -1,24 +1,12 @@
 import { Text, View } from "react-native";
-import LogoutButton from "../../components/LogoutButton";
+import Header from "../../components/Header";
 import { globalStyles } from "../../styles/globalStyles";
 
 export default function Home() {
   return (
     <View style={globalStyles.screen}>
       {/* HEADER */}
-      <View style={globalStyles.header}>
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <Text style={globalStyles.headerTitle}>Inicio</Text>
-
-          <LogoutButton />
-        </View>
-      </View>
+      <Header title="Inicio" />
 
       {/* CONTENT */}
       <View style={globalStyles.content}>

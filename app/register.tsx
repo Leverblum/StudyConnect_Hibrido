@@ -1,8 +1,9 @@
-import { View, Text, TextInput, Pressable } from "react-native";
-import { useState } from "react";
-import { globalStyles } from "../styles/globalStyles";
-import CustomButton from "../components/CustomButton";
 import { useRouter } from "expo-router";
+import { useState } from "react";
+import { Alert, Pressable, Text, TextInput, View } from "react-native";
+import CustomButton from "../components/CustomButton";
+import { registerRequest } from "../services/api";
+import { globalStyles } from "../styles/globalStyles";
 
 export default function Register() {
   const router = useRouter();
@@ -11,16 +12,29 @@ export default function Register() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleRegister = () => {
-    if (!name || !email || !password) return;
+  const handleRegister = async () => {
+    if (!name || !email || !password) {
+      Alert.alert("Error", "Completa todos los campos");
+      return;
+    }
 
-    console.log("Registrado:", name, email, password);
-    router.replace("/login");
+    try {
+      const data = await registerRequest(name, email, password);
+
+      console.log("USUARIO REGISTRADO:", data);
+
+      Alert.alert("Éxito", "Usuario creado correctamente");
+
+      router.replace("/login");
+    } catch (error: any) {
+      console.log("ERROR REGISTER:", error.message);
+      Alert.alert("Error", error.message);
+    }
   };
 
   const handleLogin = () => {
     router.push("/login");
-  }
+  };
 
   return (
     <View style={globalStyles.screen}>
@@ -58,7 +72,7 @@ export default function Register() {
 
           <Pressable onPress={handleLogin}>
             <Text style={globalStyles.registerTex}>
-              Ya tienes una cuenta? Inicia sesión
+              ¿Ya tienes una cuenta? Inicia sesión
             </Text>
           </Pressable>
         </View>

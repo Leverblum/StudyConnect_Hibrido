@@ -1,35 +1,68 @@
-import { View, Text, TextInput, FlatList } from "react-native";
-import { useState } from "react";
-import { globalStyles } from "../../styles/globalStyles";
+import { useContext, useEffect, useState } from "react";
+import { Alert, FlatList, Text, TextInput, View } from "react-native";
 import CustomButton from "../../components/CustomButton";
-import { Subject } from "../../types/Subject";
-import { Button } from "@react-navigation/elements";
-import CustomButtonDelete from "@/components/CustomButtonDelete";
+import CustomButtonDelete from "../../components/CustomButtonDelete";
+import Header from "../../components/Header";
+import { AuthContext } from "../../context/AuthContext";
+import {
+  createSubjectRequest,
+  deleteSubjectRequest,
+  getSubjectsRequest,
+} from "../../services/api";
+import { globalStyles } from "../../styles/globalStyles";
 
 export default function Subjects() {
-  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const { token } = useContext(AuthContext);
+
+  const [subjects, setSubjects] = useState<any[]>([]);
   const [name, setName] = useState("");
 
-  const addSubject = () => {
+  // 🔥 CARGAR MATERIAS
+  const loadSubjects = async () => {
+    try {
+      const data = await getSubjectsRequest(token!);
+      setSubjects(data);
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    }
+  };
+
+  useEffect(() => {
+    loadSubjects();
+  }, []);
+
+  // ➕ CREAR
+  const addSubject = async () => {
     if (!name) return;
 
-    const newSubject: Subject = {
-      id: Date.now().toString(),
-      name,
-      color: "#4A90E2",
-    };
+    try {
+      const newSubject = await createSubjectRequest(name, "#4A90E2", token!);
 
-    setSubjects([...subjects, newSubject]);
-    setName("");
+      setSubjects([...subjects, newSubject]);
+      setName("");
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    }
+  };
+
+  // ❌ ELIMINAR
+  const deleteSubject = async (id: number) => {
+    try {
+      await deleteSubjectRequest(id, token!);
+      setSubjects(subjects.filter((s) => s.id !== id));
+    } catch (error: any) {
+      Alert.alert("Error", error.message);
+    }
   };
 
   return (
     <View style={globalStyles.screen}>
-      <View style={globalStyles.header}>
-        <Text style={globalStyles.headerTitle}>Materias</Text>
-      </View>
+      {/* HEADER */}
+      <Header title="Materias" />
 
+      {/* CONTENT */}
       <View style={globalStyles.content}>
+        {/* CREAR */}
         <View style={globalStyles.card}>
           <Text style={globalStyles.cardSubtitle}>Nueva Materia</Text>
 
@@ -43,17 +76,16 @@ export default function Subjects() {
           <CustomButton title="Agregar" onPress={addSubject} />
         </View>
 
+        {/* LISTA */}
         <FlatList
           data={subjects}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => (
             <View style={globalStyles.card}>
               <View style={globalStyles.cardSpace}>
                 <CustomButtonDelete
                   title="♻"
-                  onPress={() =>
-                    setSubjects(subjects.filter((s) => s.id !== item.id))
-                  }
+                  onPress={() => deleteSubject(item.id)}
                 />
 
                 <Text style={[globalStyles.cardSmallTitle, { marginLeft: 10 }]}>

@@ -33,6 +33,11 @@ export const globalStyles = StyleSheet.create({
     fontSize: 26,
     fontWeight: "bold",
   },
+  headerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
 
   /* ================= CARD ================= */
 
