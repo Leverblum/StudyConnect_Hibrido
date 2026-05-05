@@ -1,0 +1,145 @@
+import { useCallback, useContext, useEffect, useState } from "react";
+import { Alert } from "react-native";
+import { AuthContext } from "../context/AuthContext";
+import {
+    createActivityRequest,
+    deleteActivityRequest,
+    getActivitiesBySubjectRequest,
+    getActivitiesRequest,
+    toggleActivityRequest,
+    updateActivityRequest,
+} from "../services/api";
+import { Activity } from "../types/Task";
+
+interface UseActivitiesReturn {
+  activities: Activity[];
+  loading: boolean;
+  error: string | null;
+  refreshActivities: (subjectId?: string) => Promise<void>;
+  addActivity: (
+    activity: Omit<Activity, "id" | "userId" | "createdAt">,
+  ) => Promise<Activity | null>;
+  updateActivity: (
+    id: string,
+    updates: Partial<Activity>,
+  ) => Promise<Activity | null>;
+  deleteActivity: (id: string) => Promise<boolean>;
+  toggleActivity: (id: string) => Promise<boolean>;
+}
+
+export function useActivities(): UseActivitiesReturn {
+  const { token } = useContext(AuthContext);
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const refreshActivities = useCallback(
+    async (subjectId?: string) => {
+      if (!token) return;
+
+      setLoading(true);
+      setError(null);
+
+      try {
+        const data = subjectId
+          ? await getActivitiesBySubjectRequest(subjectId, token)
+          : await getActivitiesRequest(token);
+
+        setActivities(Array.isArray(data) ? data : []);
+      } catch (err: any) {
+        setError(err.message || "Error al cargar actividades");
+        console.error("Error fetching activities:", err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [token],
+  );
+
+  useEffect(() => {
+    refreshActivities();
+  }, [refreshActivities]);
+
+  const addActivity = useCallback(
+    async (activity: Omit<Activity, "id" | "userId" | "createdAt">) => {
+      if (!token) return null;
+
+      try {
+        const newActivity = await createActivityRequest(activity, token);
+        setActivities((prev) => [...prev, newActivity]);
+        return newActivity;
+      } catch (err: any) {
+        const message = err.message || "Error al crear actividad";
+        setError(message);
+        Alert.alert("Error", message);
+        return null;
+      }
+    },
+    [token],
+  );
+
+  const updateActivity = useCallback(
+    async (id: string, updates: Partial<Activity>) => {
+      if (!token) return null;
+
+      try {
+        const updated = await updateActivityRequest(id, updates, token);
+        setActivities((prev) => prev.map((a) => (a.id === id ? updated : a)));
+        return updated;
+      } catch (err: any) {
+        const message = err.message || "Error al actualizar actividad";
+        setError(message);
+        Alert.alert("Error", message);
+        return null;
+      }
+    },
+    [token],
+  );
+
+  const deleteActivity = useCallback(
+    async (id: string) => {
+      if (!token) return false;
+
+      try {
+        await deleteActivityRequest(id, token);
+        setActivities((prev) => prev.filter((a) => a.id !== id));
+        return true;
+      } catch (err: any) {
+        const message = err.message || "Error al eliminar actividad";
+        setError(message);
+        Alert.alert("Error", message);
+        return false;
+      }
+    },
+    [token],
+  );
+
+  const toggleActivity = useCallback(
+    async (id: string) => {
+      if (!token) return false;
+
+      try {
+        const updated = await toggleActivityRequest(id, token);
+        setActivities((prev) => prev.map((a) => (a.id === id ? updated : a)));
+        return true;
+      } catch (err: any) {
+        const message = err.message || "Error al actualizar actividad";
+        setError(message);
+        Alert.alert("Error", message);
+        return false;
+      }
+    },
+    [token],
+  );
+
+  return {
+    activities,
+    loading,
+    error,
+    refreshActivities,
+    addActivity,
+    updateActivity,
+    deleteActivity,
+    toggleActivity,
+  };
+}

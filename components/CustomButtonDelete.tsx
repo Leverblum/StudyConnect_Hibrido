@@ -1,15 +1,17 @@
-import { TouchableOpacity, Text } from "react-native";
-import { globalStyles } from "../styles/globalStyles";
+import CustomButton from "./CustomButton";
 
-interface Props {
+interface CustomButtonDeleteProps {
   title: string;
   onPress: () => void;
 }
 
-export default function CustomButtonDelete({ title, onPress }: Props) {
-  return (
-    <TouchableOpacity style={globalStyles.buttonDelete} onPress={onPress}>
-      <Text style={globalStyles.buttonDeleteText}>{title}</Text>
-    </TouchableOpacity>
-  );
+/**
+ * @deprecated Use CustomButton with variant="danger" instead
+ * Example: <CustomButton title="Delete" variant="danger" onPress={onPress} />
+ */
+export default function CustomButtonDelete({
+  title,
+  onPress,
+}: CustomButtonDeleteProps) {
+  return <CustomButton title={title} variant="danger" onPress={onPress} />;
 }

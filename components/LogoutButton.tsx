@@ -1,14 +1,26 @@
+import { MaterialIcons } from "@expo/vector-icons";
 import { useContext } from "react";
-import { Text, TouchableOpacity } from "react-native";
+import { Alert, Pressable } from "react-native";
 import { AuthContext } from "../context/AuthContext";
-import { globalStyles } from "../styles/globalStyles";
+import { colors } from "../styles/globalStyles";
 
 export default function LogoutButton() {
   const { logout } = useContext(AuthContext);
 
+  const handleLogout = () => {
+    Alert.alert("Cerrar sesión", "¿Estás seguro de que deseas cerrar sesión?", [
+      { text: "Cancelar", onPress: () => {} },
+      {
+        text: "Salir",
+        onPress: logout,
+        style: "destructive",
+      },
+    ]);
+  };
+
   return (
-    <TouchableOpacity onPress={logout} style={globalStyles.buttonDelete}>
-      <Text style={globalStyles.buttonDeleteText}>Salir</Text>
-    </TouchableOpacity>
+    <Pressable onPress={handleLogout} style={{ padding: 8 }}>
+      <MaterialIcons name="logout" size={24} color={colors.white} />
+    </Pressable>
   );
 }
