@@ -1,6 +1,6 @@
 import { useRouter } from "expo-router";
 import { useContext, useState } from "react";
-import { Alert, ScrollView, View } from "react-native";
+import { Alert, ScrollView, Text, View } from "react-native";
 import Card from "../components/Card";
 import CustomButton from "../components/CustomButton";
 import CustomInput from "../components/CustomInput";
@@ -85,14 +85,16 @@ export default function LoginPage() {
 
           {/* Title */}
           <View style={globalStyles.centerContent}>
-            <View style={{ fontSize: 32, fontWeight: "700" }}>
-              <CustomInput
-                label=""
-                editable={false}
-                value=""
-                style={{ display: "none" }}
-              />
-            </View>
+            <Text
+              style={{
+                fontSize: 32,
+                fontWeight: "700",
+                color: colors.primary,
+                marginBottom: 10,
+              }}
+            >
+              StudyConnect
+            </Text>
           </View>
 
           {/* Form */}

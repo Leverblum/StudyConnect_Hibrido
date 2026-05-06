@@ -4,8 +4,6 @@ import { AuthContext } from "../context/AuthContext";
 import {
     createEventRequest,
     deleteEventRequest,
-    getEventsByDateRequest,
-    getEventsBySubjectRequest,
     getEventsRequest,
     updateEventRequest,
 } from "../services/api";
@@ -15,16 +13,10 @@ interface UseEventsReturn {
   events: Event[];
   loading: boolean;
   error: string | null;
-  refreshEvents: (
-    subjectId?: string,
-    startDate?: string,
-    endDate?: string,
-  ) => Promise<void>;
-  addEvent: (
-    event: Omit<Event, "id" | "userId" | "createdAt">,
-  ) => Promise<Event | null>;
-  updateEvent: (id: string, updates: Partial<Event>) => Promise<Event | null>;
-  deleteEvent: (id: string) => Promise<boolean>;
+  refreshEvents: () => Promise<void>;
+  addEvent: (event: Omit<Event, "id" | "created_at">) => Promise<Event | null>;
+  updateEvent: (id: number, updates: Partial<Event>) => Promise<Event | null>;
+  deleteEvent: (id: number) => Promise<boolean>;
 }
 
 export function useEvents(): UseEventsReturn {
@@ -33,41 +25,29 @@ export function useEvents(): UseEventsReturn {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refreshEvents = useCallback(
-    async (subjectId?: string, startDate?: string, endDate?: string) => {
-      if (!token) return;
+  const refreshEvents = useCallback(async () => {
+    if (!token) return;
 
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      try {
-        let data;
-
-        if (subjectId) {
-          data = await getEventsBySubjectRequest(subjectId, token);
-        } else if (startDate && endDate) {
-          data = await getEventsByDateRequest(startDate, endDate, token);
-        } else {
-          data = await getEventsRequest(token);
-        }
-
-        setEvents(Array.isArray(data) ? data : []);
-      } catch (err: any) {
-        setError(err.message || "Error al cargar eventos");
-        console.error("Error fetching events:", err);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [token],
-  );
+    try {
+      const data = await getEventsRequest(token);
+      setEvents(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      setError(err.message || "Error al cargar eventos");
+      console.error("Error fetching events:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
 
   useEffect(() => {
     refreshEvents();
   }, [refreshEvents]);
 
   const addEvent = useCallback(
-    async (event: Omit<Event, "id" | "userId" | "createdAt">) => {
+    async (event: Omit<Event, "id" | "created_at">) => {
       if (!token) return null;
 
       try {
@@ -85,7 +65,7 @@ export function useEvents(): UseEventsReturn {
   );
 
   const updateEvent = useCallback(
-    async (id: string, updates: Partial<Event>) => {
+    async (id: number, updates: Partial<Event>) => {
       if (!token) return null;
 
       try {
@@ -103,7 +83,7 @@ export function useEvents(): UseEventsReturn {
   );
 
   const deleteEvent = useCallback(
-    async (id: string) => {
+    async (id: number) => {
       if (!token) return false;
 
       try {

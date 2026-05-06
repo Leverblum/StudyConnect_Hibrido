@@ -1,4 +1,5 @@
 import { MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useContext } from "react";
 import { Alert, Pressable } from "react-native";
 import { AuthContext } from "../context/AuthContext";
@@ -6,13 +7,17 @@ import { colors } from "../styles/globalStyles";
 
 export default function LogoutButton() {
   const { logout } = useContext(AuthContext);
+  const router = useRouter();
 
   const handleLogout = () => {
     Alert.alert("Cerrar sesión", "¿Estás seguro de que deseas cerrar sesión?", [
       { text: "Cancelar", onPress: () => {} },
       {
         text: "Salir",
-        onPress: logout,
+        onPress: async () => {
+          await logout();
+          router.replace("/login");
+        },
         style: "destructive",
       },
     ]);

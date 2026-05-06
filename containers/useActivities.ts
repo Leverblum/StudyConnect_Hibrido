@@ -6,7 +6,6 @@ import {
     deleteActivityRequest,
     getActivitiesBySubjectRequest,
     getActivitiesRequest,
-    toggleActivityRequest,
     updateActivityRequest,
 } from "../services/api";
 import { Activity } from "../types/Task";
@@ -15,16 +14,15 @@ interface UseActivitiesReturn {
   activities: Activity[];
   loading: boolean;
   error: string | null;
-  refreshActivities: (subjectId?: string) => Promise<void>;
+  refreshActivities: (subjectId?: number) => Promise<void>;
   addActivity: (
-    activity: Omit<Activity, "id" | "userId" | "createdAt">,
+    activity: Omit<Activity, "id" | "created_at">,
   ) => Promise<Activity | null>;
   updateActivity: (
-    id: string,
+    id: number,
     updates: Partial<Activity>,
   ) => Promise<Activity | null>;
-  deleteActivity: (id: string) => Promise<boolean>;
-  toggleActivity: (id: string) => Promise<boolean>;
+  deleteActivity: (id: number) => Promise<boolean>;
 }
 
 export function useActivities(): UseActivitiesReturn {
@@ -34,7 +32,7 @@ export function useActivities(): UseActivitiesReturn {
   const [error, setError] = useState<string | null>(null);
 
   const refreshActivities = useCallback(
-    async (subjectId?: string) => {
+    async (subjectId?: number) => {
       if (!token) return;
 
       setLoading(true);
@@ -61,7 +59,7 @@ export function useActivities(): UseActivitiesReturn {
   }, [refreshActivities]);
 
   const addActivity = useCallback(
-    async (activity: Omit<Activity, "id" | "userId" | "createdAt">) => {
+    async (activity: Omit<Activity, "id" | "created_at">) => {
       if (!token) return null;
 
       try {
@@ -79,7 +77,7 @@ export function useActivities(): UseActivitiesReturn {
   );
 
   const updateActivity = useCallback(
-    async (id: string, updates: Partial<Activity>) => {
+    async (id: number, updates: Partial<Activity>) => {
       if (!token) return null;
 
       try {
@@ -97,7 +95,7 @@ export function useActivities(): UseActivitiesReturn {
   );
 
   const deleteActivity = useCallback(
-    async (id: string) => {
+    async (id: number) => {
       if (!token) return false;
 
       try {
@@ -114,24 +112,6 @@ export function useActivities(): UseActivitiesReturn {
     [token],
   );
 
-  const toggleActivity = useCallback(
-    async (id: string) => {
-      if (!token) return false;
-
-      try {
-        const updated = await toggleActivityRequest(id, token);
-        setActivities((prev) => prev.map((a) => (a.id === id ? updated : a)));
-        return true;
-      } catch (err: any) {
-        const message = err.message || "Error al actualizar actividad";
-        setError(message);
-        Alert.alert("Error", message);
-        return false;
-      }
-    },
-    [token],
-  );
-
   return {
     activities,
     loading,
@@ -140,6 +120,5 @@ export function useActivities(): UseActivitiesReturn {
     addActivity,
     updateActivity,
     deleteActivity,
-    toggleActivity,
   };
 }

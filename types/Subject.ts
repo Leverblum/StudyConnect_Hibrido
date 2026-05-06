@@ -1,9 +1,9 @@
 export interface Subject {
-  id: string;
+  id: number;
   name: string;
   color: string;
-  userId?: string;
-  createdAt?: string;
+  user_id?: number;
+  created_at?: string;
 }
 
 export interface SubjectWithStats extends Subject {

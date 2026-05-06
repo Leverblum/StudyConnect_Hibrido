@@ -1,6 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, ReactNode, useEffect, useState } from "react";
-import { loginRequest, registerRequest } from "../services/api";
+import {
+    loginRequest,
+    registerRequest,
+    updateUserProfileRequest,
+} from "../services/api";
 import { AuthResponse, User } from "../types/User";
 
 interface AuthContextType {
@@ -11,6 +15,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (userData: Partial<User>) => Promise<User | null>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -21,6 +26,7 @@ export const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   register: async () => {},
   logout: async () => {},
+  updateProfile: async () => null,
 });
 
 interface Props {
@@ -122,6 +128,27 @@ export function AuthProvider({ children }: Props) {
     }
   };
 
+  // 📝 UPDATE PROFILE
+  const updateProfile = async (userData: Partial<User>) => {
+    if (!token || !user) {
+      throw new Error("Token o usuario no disponible");
+    }
+
+    try {
+      const updatedUser = await updateUserProfileRequest(
+        token,
+        user.id,
+        userData,
+      );
+      setUser(updatedUser);
+      await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(updatedUser));
+      return updatedUser;
+    } catch (error: any) {
+      console.error("Error update profile:", error);
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -132,6 +159,7 @@ export function AuthProvider({ children }: Props) {
         login,
         register,
         logout,
+        updateProfile,
       }}
     >
       {children}

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    RefreshControl,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  RefreshControl,
+  Text,
+  View,
 } from "react-native";
 import Card from "../components/Card";
 import Chip from "../components/Chip";
@@ -52,7 +52,7 @@ export default function SubjectsPage() {
     setIsCreating(false);
   };
 
-  const handleDelete = (id: string, subjectName: string) => {
+  const handleDelete = (id: number, subjectName: string) => {
     Alert.alert("Eliminar", `¿Eliminar la materia "${subjectName}"?`, [
       { text: "Cancelar" },
       {
@@ -87,7 +87,7 @@ export default function SubjectsPage() {
       <FlatList
         contentContainerStyle={globalStyles.content}
         data={subjects}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -168,7 +168,7 @@ export default function SubjectsPage() {
           </Card>
         )}
         ListEmptyComponent={
-          !loading && (
+          loading ? null : (
             <View style={globalStyles.emptyStateContainer}>
               <Text style={globalStyles.emptyStateText}>
                 No hay materias aún. ¡Crea una para comenzar!

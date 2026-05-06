@@ -2,10 +2,10 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { Alert } from "react-native";
 import { AuthContext } from "../context/AuthContext";
 import {
-    createSubjectRequest,
-    deleteSubjectRequest,
-    getSubjectsRequest,
-    updateSubjectRequest,
+  createSubjectRequest,
+  deleteSubjectRequest,
+  getSubjectsRequest,
+  updateSubjectRequest,
 } from "../services/api";
 import { Subject } from "../types/Subject";
 
@@ -15,13 +15,13 @@ interface UseSubjectsReturn {
   error: string | null;
   refreshSubjects: () => Promise<void>;
   addSubject: (
-    subject: Omit<Subject, "id" | "userId" | "createdAt">,
+    subject: Omit<Subject, "id" | "user_id" | "created_at">,
   ) => Promise<Subject | null>;
   updateSubject: (
-    id: string,
+    id: number,
     updates: Partial<Subject>,
   ) => Promise<Subject | null>;
-  deleteSubject: (id: string) => Promise<boolean>;
+  deleteSubject: (id: number) => Promise<boolean>;
 }
 
 export function useSubjects(): UseSubjectsReturn {
@@ -52,7 +52,7 @@ export function useSubjects(): UseSubjectsReturn {
   }, [refreshSubjects]);
 
   const addSubject = useCallback(
-    async (subject: Omit<Subject, "id" | "userId" | "createdAt">) => {
+    async (subject: Omit<Subject, "id" | "user_id" | "created_at">) => {
       if (!token) return null;
 
       try {
@@ -70,7 +70,7 @@ export function useSubjects(): UseSubjectsReturn {
   );
 
   const updateSubject = useCallback(
-    async (id: string, updates: Partial<Subject>) => {
+    async (id: number, updates: Partial<Subject>) => {
       if (!token) return null;
 
       try {
@@ -88,7 +88,7 @@ export function useSubjects(): UseSubjectsReturn {
   );
 
   const deleteSubject = useCallback(
-    async (id: string) => {
+    async (id: number) => {
       if (!token) return false;
 
       try {

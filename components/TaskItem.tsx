@@ -22,36 +22,23 @@ export default function TaskItem({
   subjectName,
   subjectColor,
 }: ActivityItemProps) {
-  const isOverdue =
-    new Date(activity.dueDate) < new Date() && !activity.completed;
-
-  const getPriorityColor = () => {
-    switch (activity.priority) {
-      case "high":
-        return colors.error;
-      case "medium":
-        return colors.warning;
-      case "low":
-        return colors.info;
-      default:
-        return colors.gray400;
-    }
-  };
+  const isCompleted = activity.status === "completed";
+  const isOverdue = new Date(activity.due_date) < new Date() && !isCompleted;
 
   return (
     <Pressable
       style={[
         globalStyles.listItem,
         globalStyles.listItemCard,
-        activity.completed && { opacity: 0.6 },
+        isCompleted && { opacity: 0.6 },
       ]}
       onPress={onPress}
     >
       <Pressable onPress={onToggle} style={{ marginRight: 12 }}>
         <MaterialIcons
-          name={activity.completed ? "check-circle" : "radio-button-unchecked"}
+          name={isCompleted ? "check-circle" : "radio-button-unchecked"}
           size={24}
-          color={activity.completed ? colors.success : colors.gray400}
+          color={isCompleted ? colors.success : colors.gray400}
         />
       </Pressable>
 
@@ -59,12 +46,18 @@ export default function TaskItem({
         <Text
           style={[
             globalStyles.textBold,
-            activity.completed && { textDecorationLine: "line-through" },
-            isOverdue && !activity.completed && { color: colors.error },
+            isCompleted && { textDecorationLine: "line-through" },
+            isOverdue && !isCompleted && { color: colors.error },
           ]}
         >
           {activity.title}
         </Text>
+
+        {activity.description && (
+          <Text style={[globalStyles.textSmall, { marginTop: 4 }]}>
+            {activity.description}
+          </Text>
+        )}
 
         {showSubject && subjectName && (
           <Text
@@ -78,18 +71,10 @@ export default function TaskItem({
         )}
 
         <View style={[globalStyles.rowCenter, { marginTop: 6, gap: 8 }]}>
-          {activity.priority && (
-            <View
-              style={[
-                { width: 8, height: 8, borderRadius: 4 },
-                { backgroundColor: getPriorityColor() },
-              ]}
-            />
-          )}
           <Text style={globalStyles.textSmall}>
-            {new Date(activity.dueDate).toLocaleDateString()}
+            {new Date(activity.due_date).toLocaleDateString()}
           </Text>
-          {isOverdue && !activity.completed && (
+          {isOverdue && !isCompleted && (
             <Text style={[globalStyles.textSmall, { color: colors.error }]}>
               • Vencida
             </Text>

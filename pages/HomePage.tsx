@@ -1,5 +1,13 @@
+import { MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useContext } from "react";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import Badge from "../components/Badge";
 import Card from "../components/Card";
 import Header from "../components/Header";
@@ -16,29 +24,48 @@ export default function HomePage() {
 
   // Próximas 3 actividades sin completar
   const upcomingActivities = activities
-    .filter((a) => !a.completed)
+    .filter((a) => a.status === "pending")
     .sort(
-      (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(),
+      (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime(),
     )
     .slice(0, 3);
 
   // Actividades vencidas
   const overdueActivities = activities.filter(
-    (a) => !a.completed && new Date(a.dueDate) < new Date(),
+    (a) => a.status === "pending" && new Date(a.due_date) < new Date(),
   );
 
   const completedToday = activities.filter((a) => {
     const today = new Date();
-    const activityDate = new Date(a.createdAt || "");
-    return a.completed && activityDate.toDateString() === today.toDateString();
+    const activityDate = new Date(a.created_at || "");
+    return (
+      a.status === "completed" &&
+      activityDate.toDateString() === today.toDateString()
+    );
   }).length;
+
+  const router = useRouter();
+
+  const profileAction = (
+    <Pressable
+      onPress={() => router.push("/profile")}
+      style={{ padding: 8, marginRight: 8 }}
+    >
+      <MaterialIcons name="person" size={24} color={colors.white} />
+    </Pressable>
+  );
 
   return (
     <View style={globalStyles.screen}>
       <Header
         title="Inicio"
         subtitle={`Bienvenido, ${user?.name || "Usuario"}`}
-        rightAction={<LogoutButton />}
+        rightAction={
+          <View style={globalStyles.rowCenter}>
+            {profileAction}
+            <LogoutButton />
+          </View>
+        }
       />
 
       <ScrollView contentContainerStyle={globalStyles.content}>
@@ -110,22 +137,9 @@ export default function HomePage() {
                   <View style={globalStyles.flexOne}>
                     <Text style={globalStyles.textBold}>{activity.title}</Text>
                     <Text style={globalStyles.textSmall}>
-                      {new Date(activity.dueDate).toLocaleDateString()}
+                      {new Date(activity.due_date).toLocaleDateString()}
                     </Text>
                   </View>
-                  {activity.priority && (
-                    <Badge
-                      label={activity.priority}
-                      variant={
-                        activity.priority === "high"
-                          ? "error"
-                          : activity.priority === "medium"
-                            ? "warning"
-                            : "info"
-                      }
-                      size="small"
-                    />
-                  )}
                 </View>
               </View>
             ))}

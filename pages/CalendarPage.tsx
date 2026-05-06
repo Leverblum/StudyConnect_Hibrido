@@ -1,21 +1,35 @@
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  RefreshControl,
+  Text,
+  View,
 } from "react-native";
+
 import Card from "../components/Card";
+import CustomButton from "../components/CustomButton";
+import CustomInput from "../components/CustomInput";
+import DatePicker from "../components/DatePicker";
 import Header from "../components/Header";
+
+import { useActivities } from "../containers/useActivities";
 import { useEvents } from "../containers/useEvents";
 import { useSubjects } from "../containers/useSubjects";
+
 import { colors, globalStyles } from "../styles/globalStyles";
 
 export default function CalendarPage() {
-  const { events, loading, refreshEvents } = useEvents();
   const { subjects } = useSubjects();
+  const { events, loading, refreshEvents, addEvent } = useEvents();
+  const { activities } = useActivities();
+
   const [refreshing, setRefreshing] = useState(false);
+  const [eventTitle, setEventTitle] = useState("");
+  const [eventDescription, setEventDescription] = useState("");
+  const [eventDueDate, setEventDueDate] = useState(new Date());
+  const [creating, setCreating] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -23,40 +37,41 @@ export default function CalendarPage() {
     setRefreshing(false);
   };
 
-  const getSubjectName = (subjectId: string) => {
-    return subjects.find((s) => s.id === subjectId)?.name || "Sin materia";
+  const handleAddEvent = async () => {
+    if (!eventTitle.trim()) {
+      Alert.alert("Error", "Ingresa el título");
+      return;
+    }
+
+    setCreating(true);
+
+    const result = await addEvent({
+      title: eventTitle,
+      description: eventDescription,
+      due_date: eventDueDate.toISOString().split("T")[0],
+      status: "pending",
+    });
+
+    if (result) {
+      setEventTitle("");
+      setEventDescription("");
+      setEventDueDate(new Date());
+    }
+
+    setCreating(false);
   };
 
-  const getSubjectColor = (subjectId: string) => {
-    return subjects.find((s) => s.id === subjectId)?.color || colors.gray400;
-  };
-
-  // Agrupar eventos por fecha
-  const groupedEvents = events.reduce(
-    (acc, event) => {
-      const date = new Date(event.date).toLocaleDateString("es-ES", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-      if (!acc[date]) acc[date] = [];
-      acc[date].push(event);
-      return acc;
-    },
-    {} as Record<string, typeof events>,
-  );
-
-  const sortedDates = Object.keys(groupedEvents).sort(
-    (a, b) => new Date(a).getTime() - new Date(b).getTime(),
-  );
+  const allItems = [
+    ...events.map((e) => ({ ...e, type: "event" })),
+    ...activities.map((a) => ({ ...a, type: "activity" })),
+  ];
 
   if (loading && events.length === 0) {
     return (
       <View style={globalStyles.screen}>
         <Header title="Calendario" />
-        <View style={globalStyles.loadingContainer}>
-          <ActivityIndicator color={colors.primary} size="large" />
+        <View style={globalStyles.centerContent}>
+          <ActivityIndicator size="large" color={colors.primary} />
         </View>
       </View>
     );
@@ -68,103 +83,53 @@ export default function CalendarPage() {
 
       <FlatList
         contentContainerStyle={globalStyles.content}
-        data={sortedDates}
-        keyExtractor={(item) => item}
+        data={allItems}
+        keyExtractor={(item) => `${item.type}-${item.id}`}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        renderItem={({ item: date }) => (
-          <View key={date} style={{ marginBottom: 20 }}>
-            <Text
-              style={[
-                globalStyles.textBold,
-                { fontSize: 16, color: colors.primary, marginBottom: 12 },
-              ]}
-            >
-              {date}
+        ListHeaderComponent={
+          <Card>
+            <Text style={globalStyles.cardTitle}>Nuevo Evento</Text>
+
+            <CustomInput
+              label="Título"
+              value={eventTitle}
+              onChangeText={setEventTitle}
+            />
+
+            <CustomInput
+              label="Descripción"
+              value={eventDescription}
+              onChangeText={setEventDescription}
+            />
+
+            <DatePicker
+              label="Fecha"
+              value={eventDueDate}
+              onChange={setEventDueDate}
+            />
+
+            <CustomButton
+              title="Agregar"
+              onPress={handleAddEvent}
+              loading={creating}
+            />
+          </Card>
+        }
+        renderItem={({ item }) => (
+          <Card>
+            <Text style={globalStyles.cardSubtitle}>{item.title}</Text>
+
+            <Text style={globalStyles.textSmall}>
+              {new Date(item.due_date).toLocaleDateString()}
             </Text>
 
-            {groupedEvents[date].map((event) => (
-              <Card key={event.id} style={{ marginBottom: 8 }}>
-                <View>
-                  <View style={globalStyles.rowBetween}>
-                    <View style={globalStyles.flexOne}>
-                      <Text style={globalStyles.cardSubtitle}>
-                        {event.title}
-                      </Text>
-                      <Text style={globalStyles.textSmall}>
-                        {getSubjectName(event.subjectId)}
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: 6,
-                        backgroundColor: getSubjectColor(event.subjectId),
-                      }}
-                    />
-                  </View>
-
-                  {event.time && (
-                    <Text style={[globalStyles.textSmall, { marginTop: 8 }]}>
-                      🕐 {event.time}
-                    </Text>
-                  )}
-
-                  {event.location && (
-                    <Text style={[globalStyles.textSmall, { marginTop: 4 }]}>
-                      📍 {event.location}
-                    </Text>
-                  )}
-
-                  {event.description && (
-                    <Text
-                      style={[
-                        globalStyles.textSmall,
-                        { marginTop: 8, fontStyle: "italic" },
-                      ]}
-                    >
-                      {event.description}
-                    </Text>
-                  )}
-
-                  {event.eventType && (
-                    <View
-                      style={{
-                        marginTop: 8,
-                        paddingVertical: 4,
-                        paddingHorizontal: 8,
-                        backgroundColor: colors.gray200,
-                        borderRadius: 6,
-                        alignSelf: "flex-start",
-                      }}
-                    >
-                      <Text style={globalStyles.textSmall}>
-                        {event.eventType === "exam"
-                          ? "📝 Examen"
-                          : event.eventType === "class"
-                            ? "📚 Clase"
-                            : event.eventType === "meeting"
-                              ? "🤝 Reunión"
-                              : "📅 Evento"}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              </Card>
-            ))}
-          </View>
+            {item.description && (
+              <Text style={globalStyles.textSmall}>{item.description}</Text>
+            )}
+          </Card>
         )}
-        ListEmptyComponent={
-          !loading && (
-            <View style={globalStyles.emptyStateContainer}>
-              <Text style={globalStyles.emptyStateText}>
-                No hay eventos próximos
-              </Text>
-            </View>
-          )
-        }
       />
     </View>
   );

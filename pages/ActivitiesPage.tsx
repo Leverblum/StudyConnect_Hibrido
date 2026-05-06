@@ -1,16 +1,17 @@
 import { useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    RefreshControl,
-    Text,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  RefreshControl,
+  Text,
+  View,
 } from "react-native";
 import Card from "../components/Card";
 import Chip from "../components/Chip";
 import CustomButton from "../components/CustomButton";
 import CustomInput from "../components/CustomInput";
+import DatePicker from "../components/DatePicker";
 import Header from "../components/Header";
 import TaskItem from "../components/TaskItem";
 import { useActivities } from "../containers/useActivities";
@@ -24,13 +25,14 @@ export default function ActivitiesPage() {
     refreshActivities,
     addActivity,
     deleteActivity,
-    toggleActivity,
+    updateActivity,
   } = useActivities();
   const { subjects } = useSubjects();
 
   const [title, setTitle] = useState("");
-  const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
-  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+  const [description, setDescription] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState<number | null>(null);
+  const [dueDate, setDueDate] = useState(new Date());
   const [isCreating, setIsCreating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<"all" | "pending" | "completed">(
@@ -44,21 +46,21 @@ export default function ActivitiesPage() {
     }
 
     setIsCreating(true);
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    const dateString = dueDate.toISOString().split("T")[0];
 
     const result = await addActivity({
       title: title.trim(),
-      subjectId: selectedSubject,
-      dueDate: tomorrow.toISOString(),
-      completed: false,
-      priority,
+      description: description.trim() || undefined,
+      subject_id: selectedSubject,
+      due_date: dateString,
+      status: "pending",
     });
 
     if (result) {
       setTitle("");
+      setDescription("");
       setSelectedSubject(null);
-      setPriority("medium");
+      setDueDate(new Date());
     }
     setIsCreating(false);
   };
@@ -72,24 +74,24 @@ export default function ActivitiesPage() {
   const getFilteredActivities = () => {
     switch (filter) {
       case "completed":
-        return activities.filter((a) => a.completed);
+        return activities.filter((a) => a.status === "completed");
       case "pending":
-        return activities.filter((a) => !a.completed);
+        return activities.filter((a) => a.status === "pending");
       default:
         return activities;
     }
   };
 
-  const getSubjectName = (subjectId: string) => {
+  const getSubjectName = (subjectId: number) => {
     return subjects.find((s) => s.id === subjectId)?.name || "Sin materia";
   };
 
-  const getSubjectColor = (subjectId: string) => {
+  const getSubjectColor = (subjectId: number) => {
     return subjects.find((s) => s.id === subjectId)?.color || colors.gray400;
   };
 
   const filteredActivities = getFilteredActivities().sort(
-    (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime(),
+    (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime(),
   );
 
   if (loading && activities.length === 0) {
@@ -110,7 +112,7 @@ export default function ActivitiesPage() {
       <FlatList
         contentContainerStyle={globalStyles.content}
         data={filteredActivities}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => item.id.toString()}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
@@ -128,6 +130,21 @@ export default function ActivitiesPage() {
                 editable={!isCreating}
               />
 
+              <CustomInput
+                label="Descripción (opcional)"
+                placeholder="Detalles de la actividad..."
+                value={description}
+                onChangeText={setDescription}
+                editable={!isCreating}
+              />
+
+              <DatePicker
+                label="Fecha de entrega"
+                value={dueDate}
+                onChange={setDueDate}
+                minimumDate={new Date()}
+              />
+
               <Text style={globalStyles.inputLabel}>Materia</Text>
               <View
                 style={[
@@ -142,20 +159,6 @@ export default function ActivitiesPage() {
                     selected={selectedSubject === subject.id}
                     onPress={() => setSelectedSubject(subject.id)}
                     color={subject.color}
-                  />
-                ))}
-              </View>
-
-              <Text style={globalStyles.inputLabel}>Prioridad</Text>
-              <View style={[globalStyles.row, { gap: 8, marginBottom: 16 }]}>
-                {(["low", "medium", "high"] as const).map((p) => (
-                  <Chip
-                    key={p}
-                    label={
-                      p === "high" ? "Alta" : p === "medium" ? "Media" : "Baja"
-                    }
-                    selected={priority === p}
-                    onPress={() => setPriority(p)}
                   />
                 ))}
               </View>
@@ -190,22 +193,26 @@ export default function ActivitiesPage() {
         renderItem={({ item }) => (
           <TaskItem
             activity={item}
-            onToggle={() => toggleActivity(item.id)}
+            onToggle={() =>
+              updateActivity(item.id, {
+                status: item.status === "completed" ? "pending" : "completed",
+              })
+            }
             onDelete={() => deleteActivity(item.id)}
             showSubject
-            subjectName={getSubjectName(item.subjectId)}
-            subjectColor={getSubjectColor(item.subjectId)}
+            subjectName={getSubjectName(item.subject_id)}
+            subjectColor={getSubjectColor(item.subject_id)}
           />
         )}
         ListEmptyComponent={
-          !loading && (
+          !loading ? (
             <View style={globalStyles.emptyStateContainer}>
               <Text style={globalStyles.emptyStateText}>
                 No hay actividades{" "}
                 {filter === "pending" ? "pendientes" : "completadas"}
               </Text>
             </View>
-          )
+          ) : null
         }
       />
     </View>
