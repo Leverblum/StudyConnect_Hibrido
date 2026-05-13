@@ -29,10 +29,10 @@ export const createSubjectRequest = SubjectService.createSubject;
 export const updateSubjectRequest = SubjectService.updateSubject;
 export const deleteSubjectRequest = SubjectService.deleteSubject;
 
-export const getActivitiesRequest = ActivityService.getActivities;
+export const getActivitiesRequest = (token: string) =>
+  ActivityService.getActivities(token);
 export const getActivitiesBySubjectRequest =
   ActivityService.getActivitiesBySubject;
-export const getActivityRequest = ActivityService.getActivity;
 export const createActivityRequest = ActivityService.createActivity;
 export const updateActivityRequest = ActivityService.updateActivity;
 export const deleteActivityRequest = ActivityService.deleteActivity;

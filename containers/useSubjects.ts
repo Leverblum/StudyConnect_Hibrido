@@ -2,10 +2,10 @@ import { useCallback, useContext, useEffect, useState } from "react";
 import { Alert } from "react-native";
 import { AuthContext } from "../context/AuthContext";
 import {
-  createSubjectRequest,
-  deleteSubjectRequest,
-  getSubjectsRequest,
-  updateSubjectRequest,
+    createSubjectRequest,
+    deleteSubjectRequest,
+    getSubjectsRequest,
+    updateSubjectRequest,
 } from "../services/api";
 import { Subject } from "../types/Subject";
 
@@ -97,6 +97,15 @@ export function useSubjects(): UseSubjectsReturn {
         return true;
       } catch (err: any) {
         const message = err.message || "Error al eliminar materia";
+        const normalizedMessage = String(message).toLowerCase();
+        if (
+          normalizedMessage.includes("404") ||
+          normalizedMessage.includes("not found") ||
+          normalizedMessage.includes("no encontrado")
+        ) {
+          setSubjects((prev) => prev.filter((s) => s.id !== id));
+          return true;
+        }
         setError(message);
         Alert.alert("Error", message);
         return false;

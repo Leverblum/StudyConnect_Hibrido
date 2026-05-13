@@ -15,8 +15,13 @@ export default function LogoutButton() {
       {
         text: "Salir",
         onPress: async () => {
-          await logout();
-          router.replace("/login");
+          try {
+            await logout();
+          } catch (error) {
+            console.error("Logout error:", error);
+          } finally {
+            router.replace("/login");
+          }
         },
         style: "destructive",
       },

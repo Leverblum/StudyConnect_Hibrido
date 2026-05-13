@@ -20,7 +20,7 @@ interface UseEventsReturn {
 }
 
 export function useEvents(): UseEventsReturn {
-  const { token } = useContext(AuthContext);
+  const { token, user } = useContext(AuthContext);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,10 +48,14 @@ export function useEvents(): UseEventsReturn {
 
   const addEvent = useCallback(
     async (event: Omit<Event, "id" | "created_at">) => {
-      if (!token) return null;
+      if (!token || !user) return null;
 
       try {
-        const newEvent = await createEventRequest(event, token);
+        const eventWithUser = {
+          ...event,
+          user_id: user.id,
+        };
+        const newEvent = await createEventRequest(eventWithUser, token);
         setEvents((prev) => [...prev, newEvent]);
         return newEvent;
       } catch (err: any) {
@@ -61,7 +65,7 @@ export function useEvents(): UseEventsReturn {
         return null;
       }
     },
-    [token],
+    [token, user],
   );
 
   const updateEvent = useCallback(
@@ -92,6 +96,10 @@ export function useEvents(): UseEventsReturn {
         return true;
       } catch (err: any) {
         const message = err.message || "Error al eliminar evento";
+        if (/404|not found|no encontrado/i.test(message)) {
+          setEvents((prev) => prev.filter((e) => e.id !== id));
+          return true;
+        }
         setError(message);
         Alert.alert("Error", message);
         return false;

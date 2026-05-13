@@ -1,12 +1,13 @@
 import { MaterialIcons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { useContext } from "react";
+import { useCallback, useContext } from "react";
 import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
+    ActivityIndicator,
+    Pressable,
+    ScrollView,
+    Text,
+    View,
 } from "react-native";
 import Badge from "../components/Badge";
 import Card from "../components/Card";
@@ -19,8 +20,12 @@ import { colors, globalStyles } from "../styles/globalStyles";
 
 export default function HomePage() {
   const { user } = useContext(AuthContext);
-  const { subjects, loading: subjectsLoading } = useSubjects();
-  const { activities, loading: activitiesLoading } = useActivities();
+  const { subjects, loading: subjectsLoading, refreshSubjects } = useSubjects();
+  const {
+    activities,
+    loading: activitiesLoading,
+    refreshActivities,
+  } = useActivities();
 
   // Próximas 3 actividades sin completar
   const upcomingActivities = activities
@@ -43,6 +48,13 @@ export default function HomePage() {
       activityDate.toDateString() === today.toDateString()
     );
   }).length;
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshSubjects();
+      refreshActivities();
+    }, [refreshActivities, refreshSubjects]),
+  );
 
   const router = useRouter();
 
@@ -125,17 +137,24 @@ export default function HomePage() {
             style={{ marginVertical: 32 }}
           />
         ) : upcomingActivities.length > 0 ? (
-          <Card>
+          <Card style={{ paddingVertical: 20 }}>
             <Text style={globalStyles.cardTitle}>Próximas Entregas</Text>
 
             {upcomingActivities.map((activity) => (
               <View
                 key={activity.id}
-                style={[globalStyles.dividerSmall, globalStyles.mt12]}
+                style={{
+                  padding: 14,
+                  borderRadius: 16,
+                  backgroundColor: colors.backgroundSecondary,
+                  marginBottom: 12,
+                }}
               >
                 <View style={globalStyles.rowBetween}>
                   <View style={globalStyles.flexOne}>
-                    <Text style={globalStyles.textBold}>{activity.title}</Text>
+                    <Text style={[globalStyles.textBold, { marginBottom: 6 }]}>
+                      {activity.title}
+                    </Text>
                     <Text style={globalStyles.textSmall}>
                       {new Date(activity.due_date).toLocaleDateString()}
                     </Text>

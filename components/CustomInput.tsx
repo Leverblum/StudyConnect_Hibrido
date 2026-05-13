@@ -23,14 +23,14 @@ export default function CustomInput({
         style={[
           globalStyles.input,
           isFocused && globalStyles.inputFocused,
-          error && globalStyles.inputError,
+          error ? globalStyles.inputError : null,
         ]}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         placeholderTextColor={colors.gray500}
         {...props}
       />
-      {error && <Text style={globalStyles.textError}>{error}</Text>}
+      {error ? <Text style={globalStyles.textError}>{error}</Text> : null}
     </View>
   );
 }

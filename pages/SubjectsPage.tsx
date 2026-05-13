@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  RefreshControl,
-  Text,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    Platform,
+    RefreshControl,
+    Text,
+    View,
 } from "react-native";
 import Card from "../components/Card";
 import Chip from "../components/Chip";
@@ -52,16 +54,36 @@ export default function SubjectsPage() {
     setIsCreating(false);
   };
 
-  const handleDelete = (id: number, subjectName: string) => {
-    Alert.alert("Eliminar", `¿Eliminar la materia "${subjectName}"?`, [
-      { text: "Cancelar" },
-      {
-        text: "Eliminar",
-        onPress: () => deleteSubject(id),
-        style: "destructive",
-      },
-    ]);
+  const handleDelete = async (id: number, subjectName: string) => {
+    const confirmed =
+      Platform.OS === "web" && typeof window !== "undefined"
+        ? window.confirm(`¿Eliminar la materia "${subjectName}"?`)
+        : await new Promise<boolean>((resolve) => {
+            Alert.alert("Eliminar", `¿Eliminar la materia "${subjectName}"?`, [
+              { text: "Cancelar", onPress: () => resolve(false) },
+              {
+                text: "Eliminar",
+                onPress: () => resolve(true),
+                style: "destructive",
+              },
+            ]);
+          });
+
+    if (!confirmed) {
+      return;
+    }
+
+    const removed = await deleteSubject(id);
+    if (removed) {
+      await refreshSubjects();
+    }
   };
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshSubjects();
+    }, [refreshSubjects]),
+  );
 
   const onRefresh = async () => {
     setRefreshing(true);

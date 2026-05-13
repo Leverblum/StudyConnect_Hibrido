@@ -4,7 +4,6 @@ import { AuthContext } from "../context/AuthContext";
 import {
     createActivityRequest,
     deleteActivityRequest,
-    getActivitiesBySubjectRequest,
     getActivitiesRequest,
     updateActivityRequest,
 } from "../services/api";
@@ -14,7 +13,7 @@ interface UseActivitiesReturn {
   activities: Activity[];
   loading: boolean;
   error: string | null;
-  refreshActivities: (subjectId?: number) => Promise<void>;
+  refreshActivities: () => Promise<void>;
   addActivity: (
     activity: Omit<Activity, "id" | "created_at">,
   ) => Promise<Activity | null>;
@@ -26,33 +25,28 @@ interface UseActivitiesReturn {
 }
 
 export function useActivities(): UseActivitiesReturn {
-  const { token } = useContext(AuthContext);
+  const { token, user } = useContext(AuthContext);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const refreshActivities = useCallback(
-    async (subjectId?: number) => {
-      if (!token) return;
+  const refreshActivities = useCallback(async () => {
+    if (!token || !user) return;
 
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
 
-      try {
-        const data = subjectId
-          ? await getActivitiesBySubjectRequest(subjectId, token)
-          : await getActivitiesRequest(token);
+    try {
+      const data = await getActivitiesRequest(token);
 
-        setActivities(Array.isArray(data) ? data : []);
-      } catch (err: any) {
-        setError(err.message || "Error al cargar actividades");
-        console.error("Error fetching activities:", err);
-      } finally {
-        setLoading(false);
-      }
-    },
-    [token],
-  );
+      setActivities(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      setError(err.message || "Error al cargar actividades");
+      console.error("Error fetching activities:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [token, user]);
 
   useEffect(() => {
     refreshActivities();
@@ -104,6 +98,10 @@ export function useActivities(): UseActivitiesReturn {
         return true;
       } catch (err: any) {
         const message = err.message || "Error al eliminar actividad";
+        if (/404|not found|no encontrado/i.test(message)) {
+          setActivities((prev) => prev.filter((a) => a.id !== id));
+          return true;
+        }
         setError(message);
         Alert.alert("Error", message);
         return false;

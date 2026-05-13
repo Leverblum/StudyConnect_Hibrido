@@ -1,5 +1,6 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import React, { createContext, ReactNode, useEffect, useState } from "react";
+import { Platform } from "react-native";
 import {
     loginRequest,
     registerRequest,
@@ -35,6 +36,30 @@ interface Props {
 
 const STORAGE_TOKEN_KEY = "auth_token";
 const STORAGE_USER_KEY = "auth_user";
+const isWeb = Platform.OS === "web";
+
+const getStorageItemAsync = async (key: string) => {
+  if (isWeb && typeof window !== "undefined") {
+    return window.localStorage.getItem(key);
+  }
+  return SecureStore.getItemAsync(key);
+};
+
+const setStorageItemAsync = async (key: string, value: string) => {
+  if (isWeb && typeof window !== "undefined") {
+    window.localStorage.setItem(key, value);
+    return;
+  }
+  return SecureStore.setItemAsync(key, value);
+};
+
+const deleteStorageItemAsync = async (key: string) => {
+  if (isWeb && typeof window !== "undefined") {
+    window.localStorage.removeItem(key);
+    return;
+  }
+  return SecureStore.deleteItemAsync(key);
+};
 
 export function AuthProvider({ children }: Props) {
   const [user, setUser] = useState<User | null>(null);
@@ -45,8 +70,8 @@ export function AuthProvider({ children }: Props) {
   useEffect(() => {
     const loadSession = async () => {
       try {
-        const savedToken = await AsyncStorage.getItem(STORAGE_TOKEN_KEY);
-        const savedUser = await AsyncStorage.getItem(STORAGE_USER_KEY);
+        const savedToken = await getStorageItemAsync(STORAGE_TOKEN_KEY);
+        const savedUser = await getStorageItemAsync(STORAGE_USER_KEY);
 
         if (savedToken && savedUser) {
           setToken(savedToken);
@@ -74,9 +99,9 @@ export function AuthProvider({ children }: Props) {
       setUser(response.user);
       setToken(response.token);
 
-      // 💾 Guardar en AsyncStorage
-      await AsyncStorage.setItem(STORAGE_TOKEN_KEY, response.token);
-      await AsyncStorage.setItem(
+      // 💾 Guardar en almacenamiento seguro
+      await setStorageItemAsync(STORAGE_TOKEN_KEY, response.token);
+      await setStorageItemAsync(
         STORAGE_USER_KEY,
         JSON.stringify(response.user),
       );
@@ -102,9 +127,9 @@ export function AuthProvider({ children }: Props) {
       setUser(response.user);
       setToken(response.token);
 
-      // 💾 Guardar en AsyncStorage
-      await AsyncStorage.setItem(STORAGE_TOKEN_KEY, response.token);
-      await AsyncStorage.setItem(
+      // 💾 Guardar en almacenamiento seguro
+      await setStorageItemAsync(STORAGE_TOKEN_KEY, response.token);
+      await setStorageItemAsync(
         STORAGE_USER_KEY,
         JSON.stringify(response.user),
       );
@@ -120,9 +145,9 @@ export function AuthProvider({ children }: Props) {
       setUser(null);
       setToken(null);
 
-      // 🗑️ Limpiar AsyncStorage
-      await AsyncStorage.removeItem(STORAGE_TOKEN_KEY);
-      await AsyncStorage.removeItem(STORAGE_USER_KEY);
+      // 🗑️ Limpiar almacenamiento seguro
+      await deleteStorageItemAsync(STORAGE_TOKEN_KEY);
+      await deleteStorageItemAsync(STORAGE_USER_KEY);
     } catch (error) {
       console.error("Error logout:", error);
     }
@@ -141,7 +166,7 @@ export function AuthProvider({ children }: Props) {
         userData,
       );
       setUser(updatedUser);
-      await AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(updatedUser));
+      await setStorageItemAsync(STORAGE_USER_KEY, JSON.stringify(updatedUser));
       return updatedUser;
     } catch (error: any) {
       console.error("Error update profile:", error);

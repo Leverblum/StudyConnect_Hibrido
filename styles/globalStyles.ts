@@ -50,7 +50,6 @@ export const globalStyles = StyleSheet.create({
   },
 
   content: {
-    flex: 1,
     padding: 16,
     paddingTop: 12,
   },
@@ -75,9 +74,6 @@ export const globalStyles = StyleSheet.create({
     paddingBottom: 20,
     paddingHorizontal: 16,
     elevation: 4,
-    shadowColor: "#000",
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
   },
 
   headerTitle: {
@@ -113,9 +109,6 @@ export const globalStyles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
     elevation: 3,
   },
 
@@ -124,9 +117,6 @@ export const globalStyles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     marginBottom: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
     elevation: 5,
   },
 
@@ -218,11 +208,12 @@ export const globalStyles = StyleSheet.create({
     backgroundColor: colors.backgroundSecondary,
     borderWidth: 1,
     borderColor: colors.gray300,
-    padding: 12,
     paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 12,
     marginBottom: 12,
-    fontSize: 14,
+    minHeight: 44,
+    fontSize: 15,
     color: colors.black,
   },
 
@@ -265,9 +256,6 @@ export const globalStyles = StyleSheet.create({
     shadowColor: colors.primary,
     shadowOpacity: 0.3,
     shadowRadius: 4,
-  },
-
-  buttonText: {
     color: colors.white,
     fontWeight: "700",
     fontSize: 16,

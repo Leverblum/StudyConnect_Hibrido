@@ -13,6 +13,26 @@ interface ActivityItemProps {
   subjectColor?: string;
 }
 
+const parseDateOnly = (dateString?: string | null) => {
+  if (!dateString || typeof dateString !== "string") {
+    return new Date();
+  }
+
+  const [datePart] = dateString.split("T");
+  if (!datePart) {
+    return new Date();
+  }
+
+  const parts = datePart.split("-");
+  if (parts.length !== 3) {
+    return new Date();
+  }
+
+  const [year, month, day] = parts.map(Number);
+  const date = new Date(year, month - 1, day);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+};
+
 export default function TaskItem({
   activity,
   onToggle,
@@ -23,18 +43,18 @@ export default function TaskItem({
   subjectColor,
 }: ActivityItemProps) {
   const isCompleted = activity.status === "completed";
-  const isOverdue = new Date(activity.due_date) < new Date() && !isCompleted;
+  const dueDate = parseDateOnly(activity.due_date);
+  const isOverdue = dueDate < new Date() && !isCompleted;
 
   return (
-    <Pressable
+    <View
       style={[
         globalStyles.listItem,
         globalStyles.listItemCard,
         isCompleted && { opacity: 0.6 },
       ]}
-      onPress={onPress}
     >
-      <Pressable onPress={onToggle} style={{ marginRight: 12 }}>
+      <Pressable onPress={onToggle} style={{ marginRight: 12, padding: 4 }}>
         <MaterialIcons
           name={isCompleted ? "check-circle" : "radio-button-unchecked"}
           size={24}
@@ -42,7 +62,10 @@ export default function TaskItem({
         />
       </Pressable>
 
-      <View style={[globalStyles.flexOne, { marginLeft: 8 }]}>
+      <Pressable
+        onPress={onPress}
+        style={[globalStyles.flexOne, { marginLeft: 8 }]}
+      >
         <Text
           style={[
             globalStyles.textBold,
@@ -72,7 +95,7 @@ export default function TaskItem({
 
         <View style={[globalStyles.rowCenter, { marginTop: 6, gap: 8 }]}>
           <Text style={globalStyles.textSmall}>
-            {new Date(activity.due_date).toLocaleDateString()}
+            {activity.due_date ? dueDate.toLocaleDateString() : "Sin fecha"}
           </Text>
           {isOverdue && !isCompleted && (
             <Text style={[globalStyles.textSmall, { color: colors.error }]}>
@@ -80,11 +103,11 @@ export default function TaskItem({
             </Text>
           )}
         </View>
-      </View>
+      </Pressable>
 
       <Pressable onPress={onDelete} style={{ marginLeft: 12, padding: 8 }}>
         <MaterialIcons name="delete-outline" size={20} color={colors.error} />
       </Pressable>
-    </Pressable>
+    </View>
   );
 }

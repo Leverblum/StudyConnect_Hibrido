@@ -1,18 +1,21 @@
 import { router } from "expo-router";
 
-const API_URL = "http://localhost:3000/api";
+const API_URL =
+  "http://studyconnect-env.eba-wvqpk8ks.us-east-1.elasticbeanstalk.com/api";
 
 export class ApiClient {
   static baseUrl = API_URL;
 
   static getPublicHeaders() {
     return {
+      Accept: "application/json",
       "Content-Type": "application/json",
     };
   }
 
   static getAuthHeaders(token?: string) {
     return {
+      Accept: "application/json",
       "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };

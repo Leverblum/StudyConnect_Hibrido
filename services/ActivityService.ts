@@ -1,15 +1,21 @@
 import { Activity } from "../types/Task";
 import { ApiClient } from "./ApiClient";
+import { SubjectService } from "./SubjectService";
 
 export class ActivityService {
   static async getActivities(token: string): Promise<Activity[]> {
-    return ApiClient.request<Activity[]>(
-      "/activities",
-      {
-        method: "GET",
-      },
-      token,
-    );
+    const subjects = await SubjectService.getSubjects(token);
+    const allActivities: Activity[] = [];
+
+    for (const subject of subjects) {
+      const activities = await ActivityService.getActivitiesBySubject(
+        subject.id,
+        token,
+      );
+      allActivities.push(...activities);
+    }
+
+    return allActivities;
   }
 
   static async getActivitiesBySubject(
@@ -18,16 +24,6 @@ export class ActivityService {
   ): Promise<Activity[]> {
     return ApiClient.request<Activity[]>(
       `/activities/${subjectId}`,
-      {
-        method: "GET",
-      },
-      token,
-    );
-  }
-
-  static async getActivity(id: number, token: string): Promise<Activity> {
-    return ApiClient.request<Activity>(
-      `/activities/${id}`,
       {
         method: "GET",
       },

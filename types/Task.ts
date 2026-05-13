@@ -4,7 +4,7 @@ export interface Activity {
   description?: string;
   subject_id: number;
   due_date: string;
-  status: "pending" | "completed";
+  status: "pending" | "completed" | "in_progress";
   created_at?: string;
 }
 
@@ -14,10 +14,7 @@ export interface Event {
   description?: string;
   user_id?: number;
   due_date: string;
-  status: "pending" | "completed";
-  time?: string;
-  location?: string;
-  eventType?: "exam" | "class" | "meeting" | "other";
+  status: "pending" | "completed" | "scheduled";
   created_at?: string;
 }
 

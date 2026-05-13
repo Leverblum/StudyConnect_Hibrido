@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback, useState } from "react";
 import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  RefreshControl,
-  Text,
-  View,
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    RefreshControl,
+    Text,
+    View,
 } from "react-native";
 import Card from "../components/Card";
 import Chip from "../components/Chip";
@@ -17,6 +18,27 @@ import TaskItem from "../components/TaskItem";
 import { useActivities } from "../containers/useActivities";
 import { useSubjects } from "../containers/useSubjects";
 import { colors, globalStyles } from "../styles/globalStyles";
+import { Activity } from "../types/Task";
+
+const parseDateOnly = (dateString?: string | null) => {
+  if (!dateString || typeof dateString !== "string") {
+    return new Date();
+  }
+
+  const [datePart] = dateString.split("T");
+  if (!datePart) {
+    return new Date();
+  }
+
+  const parts = datePart.split("-");
+  if (parts.length !== 3) {
+    return new Date();
+  }
+
+  const [year, month, day] = parts.map(Number);
+  const date = new Date(year, month - 1, day);
+  return Number.isNaN(date.getTime()) ? new Date() : date;
+};
 
 export default function ActivitiesPage() {
   const {
@@ -27,48 +49,100 @@ export default function ActivitiesPage() {
     deleteActivity,
     updateActivity,
   } = useActivities();
-  const { subjects } = useSubjects();
+  const { subjects, refreshSubjects } = useSubjects();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectedSubject, setSelectedSubject] = useState<number | null>(null);
   const [dueDate, setDueDate] = useState(new Date());
+  const [editingActivityId, setEditingActivityId] = useState<number | null>(
+    null,
+  );
   const [isCreating, setIsCreating] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<"all" | "pending" | "completed">(
     "pending",
   );
 
-  const handleAddActivity = async () => {
+  const resetForm = () => {
+    setTitle("");
+    setDescription("");
+    setSelectedSubject(null);
+    setDueDate(new Date());
+    setEditingActivityId(null);
+  };
+
+  const handleSaveActivity = async () => {
     if (!title.trim() || !selectedSubject) {
       Alert.alert("Error", "Completa todos los campos");
+      return;
+    }
+
+    if (Number.isNaN(dueDate.getTime())) {
+      Alert.alert("Error", "Selecciona una fecha válida");
       return;
     }
 
     setIsCreating(true);
     const dateString = dueDate.toISOString().split("T")[0];
 
-    const result = await addActivity({
-      title: title.trim(),
-      description: description.trim() || undefined,
-      subject_id: selectedSubject,
-      due_date: dateString,
-      status: "pending",
-    });
+    if (editingActivityId) {
+      const updated = await updateActivity(editingActivityId, {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        subject_id: selectedSubject,
+        due_date: dateString,
+      });
 
-    if (result) {
-      setTitle("");
-      setDescription("");
-      setSelectedSubject(null);
-      setDueDate(new Date());
+      if (updated) {
+        resetForm();
+      }
+    } else {
+      const result = await addActivity({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        subject_id: selectedSubject,
+        due_date: dateString,
+        status: "pending",
+      });
+
+      if (result) {
+        resetForm();
+      }
     }
+
     setIsCreating(false);
   };
 
+  const handleEditActivity = (activity: Activity) => {
+    setEditingActivityId(activity.id);
+    setTitle(activity.title);
+    setDescription(activity.description || "");
+    setSelectedSubject(activity.subject_id);
+    setDueDate(parseDateOnly(activity.due_date));
+  };
+
+  const handleCancelEdit = () => {
+    resetForm();
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshSubjects();
+    }, [refreshSubjects]),
+  );
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await refreshActivities();
+    await Promise.all([refreshActivities(), refreshSubjects()]);
     setRefreshing(false);
+  };
+
+  const handleDeleteActivity = async (id: number) => {
+    const deleted = await deleteActivity(id);
+    if (deleted) {
+      await refreshActivities();
+    }
   };
 
   const getFilteredActivities = () => {
@@ -91,7 +165,8 @@ export default function ActivitiesPage() {
   };
 
   const filteredActivities = getFilteredActivities().sort(
-    (a, b) => new Date(a.due_date).getTime() - new Date(b.due_date).getTime(),
+    (a, b) =>
+      parseDateOnly(a.due_date).getTime() - parseDateOnly(b.due_date).getTime(),
   );
 
   if (loading && activities.length === 0) {
@@ -118,9 +193,10 @@ export default function ActivitiesPage() {
         }
         ListHeaderComponent={
           <>
-            {/* Create Card */}
             <Card variant="large" style={{ marginBottom: 20 }}>
-              <Text style={globalStyles.cardTitle}>Nueva Actividad</Text>
+              <Text style={globalStyles.cardTitle}>
+                {editingActivityId ? "Editar Actividad" : "Nueva Actividad"}
+              </Text>
 
               <CustomInput
                 label="Título"
@@ -164,14 +240,25 @@ export default function ActivitiesPage() {
               </View>
 
               <CustomButton
-                title="Agregar Actividad"
-                onPress={handleAddActivity}
+                title={
+                  editingActivityId ? "Guardar cambios" : "Agregar Actividad"
+                }
+                onPress={handleSaveActivity}
                 loading={isCreating}
                 disabled={isCreating || !title.trim() || !selectedSubject}
               />
+
+              {editingActivityId ? (
+                <CustomButton
+                  title="Cancelar"
+                  variant="outline"
+                  onPress={handleCancelEdit}
+                  disabled={isCreating}
+                  style={{ marginTop: 12 }}
+                />
+              ) : null}
             </Card>
 
-            {/* Filters */}
             <View style={[globalStyles.row, { gap: 8, marginBottom: 16 }]}>
               {(["pending", "completed", "all"] as const).map((f) => (
                 <Chip
@@ -198,7 +285,8 @@ export default function ActivitiesPage() {
                 status: item.status === "completed" ? "pending" : "completed",
               })
             }
-            onDelete={() => deleteActivity(item.id)}
+            onDelete={() => handleDeleteActivity(item.id)}
+            onPress={() => handleEditActivity(item)}
             showSubject
             subjectName={getSubjectName(item.subject_id)}
             subjectColor={getSubjectColor(item.subject_id)}

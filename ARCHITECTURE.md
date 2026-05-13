@@ -207,7 +207,7 @@ getPublicHeaders(); // { "Content-Type": "application/json" }
 
 #### Activities
 
-- `getActivitiesRequest(token)` → `GET /activities`
+- `getActivitiesRequest(userId, token)` → `GET /activities/:userId`
 - `getActivitiesBySubjectRequest(subjectId, token)` → `GET /activities?subjectId={id}`
 - `createActivityRequest(activity, token)` → `POST /activities`
 - `updateActivityRequest(id, updates, token)` → `PUT /activities/{id}`
